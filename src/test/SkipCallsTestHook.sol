@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.19;
 
 import {Hooks} from "../libraries/Hooks.sol";
 import {BaseTestHooks} from "./BaseTestHooks.sol";

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.19;
 
 import {Test} from "forge-std/Test.sol";
 import {IHooks} from "../src/interfaces/IHooks.sol";
@@ -949,6 +949,8 @@ contract PoolManagerTest is Test, Deployers, GasSnapshot {
         manager.burn(address(this), key.currency0.toId(), 1);
     }
 
+    event ProtocolFeeUpdated(PoolId indexed id, uint24 protocolFee);
+ 
     function test_setProtocolFee_updatesProtocolFeeForInitializedPool(uint24 protocolFee) public {
         (,, uint24 slot0ProtocolFee,) = manager.getSlot0(key.toId());
         assertEq(slot0ProtocolFee, 0);
@@ -961,7 +963,7 @@ contract PoolManagerTest is Test, Deployers, GasSnapshot {
             manager.setProtocolFee(key, protocolFee);
         } else {
             vm.expectEmit(false, false, false, true);
-            emit IProtocolFees.ProtocolFeeUpdated(key.toId(), protocolFee);
+            emit ProtocolFeeUpdated(key.toId(), protocolFee);
             manager.setProtocolFee(key, protocolFee);
 
             (,, slot0ProtocolFee,) = manager.getSlot0(key.toId());

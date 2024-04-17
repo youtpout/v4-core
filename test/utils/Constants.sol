@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.19;
 
 library Constants {
     uint160 public constant SQRT_RATIO_1_1 = 79228162514264337593543950336;

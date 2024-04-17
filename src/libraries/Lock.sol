@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.19;
 
 import {IHooks} from "../interfaces/IHooks.sol";
 
@@ -13,21 +13,21 @@ library Lock {
         uint256 slot = IS_UNLOCKED_SLOT;
         assembly {
             // unlock
-            tstore(slot, true)
+            sstore(slot, true)
         }
     }
 
     function lock() internal {
         uint256 slot = IS_UNLOCKED_SLOT;
         assembly {
-            tstore(slot, false)
+            sstore(slot, false)
         }
     }
 
     function isUnlocked() internal view returns (bool unlocked) {
         uint256 slot = IS_UNLOCKED_SLOT;
         assembly {
-            unlocked := tload(slot)
+            unlocked := sload(slot)
         }
     }
 }
