@@ -8,11 +8,12 @@ import {PoolKey} from "../types/PoolKey.sol";
 import {PoolTestBase} from "./PoolTestBase.sol";
 import {IHooks} from "../interfaces/IHooks.sol";
 import {Hooks} from "../libraries/Hooks.sol";
-import {Test} from "forge-std/Test.sol";
 import {SwapFeeLibrary} from "../libraries/SwapFeeLibrary.sol";
+import {CurrencySettleTake} from "../libraries/CurrencySettleTake.sol";
 
-contract PoolModifyLiquidityTest is Test, PoolTestBase {
+contract PoolModifyLiquidityTest is PoolTestBase {
     using CurrencyLibrary for Currency;
+    using CurrencySettleTake for Currency;
     using Hooks for IHooks;
     using SwapFeeLibrary for uint24;
 
@@ -23,8 +24,8 @@ contract PoolModifyLiquidityTest is Test, PoolTestBase {
         PoolKey key;
         IPoolManager.ModifyLiquidityParams params;
         bytes hookData;
-        bool settleUsingTransfer;
-        bool withdrawTokens;
+        bool settleUsingBurn;
+        bool takeClaims;
     }
 
     function modifyLiquidity(
@@ -32,20 +33,18 @@ contract PoolModifyLiquidityTest is Test, PoolTestBase {
         IPoolManager.ModifyLiquidityParams memory params,
         bytes memory hookData
     ) external payable returns (BalanceDelta delta) {
-        delta = modifyLiquidity(key, params, hookData, true, true);
+        delta = modifyLiquidity(key, params, hookData, false, false);
     }
 
     function modifyLiquidity(
         PoolKey memory key,
         IPoolManager.ModifyLiquidityParams memory params,
         bytes memory hookData,
-        bool settleUsingTransfer,
-        bool withdrawTokens
+        bool settleUsingBurn,
+        bool takeClaims
     ) public payable returns (BalanceDelta delta) {
         delta = abi.decode(
-            manager.lock(
-                abi.encode(CallbackData(msg.sender, key, params, hookData, settleUsingTransfer, withdrawTokens))
-            ),
+            manager.unlock(abi.encode(CallbackData(msg.sender, key, params, hookData, settleUsingBurn, takeClaims))),
             (BalanceDelta)
         );
 
@@ -55,15 +54,15 @@ contract PoolModifyLiquidityTest is Test, PoolTestBase {
         }
     }
 
-    function lockAcquired(bytes calldata rawData) external returns (bytes memory) {
+    function unlockCallback(bytes calldata rawData) external returns (bytes memory) {
         require(msg.sender == address(manager));
 
         CallbackData memory data = abi.decode(rawData, (CallbackData));
 
-        BalanceDelta delta = manager.modifyLiquidity(data.key, data.params, data.hookData);
+        (BalanceDelta delta,) = manager.modifyLiquidity(data.key, data.params, data.hookData);
 
-        (,,, int256 delta0) = _fetchBalances(data.key.currency0, data.sender, address(this));
-        (,,, int256 delta1) = _fetchBalances(data.key.currency1, data.sender, address(this));
+        (,, int256 delta0) = _fetchBalances(data.key.currency0, data.sender, address(this));
+        (,, int256 delta1) = _fetchBalances(data.key.currency1, data.sender, address(this));
 
         if (data.params.liquidityDelta < 0) {
             assert(delta0 > 0 || delta1 > 0);
@@ -73,10 +72,10 @@ contract PoolModifyLiquidityTest is Test, PoolTestBase {
             assert(!(delta0 > 0 || delta1 > 0));
         }
 
-        if (delta0 < 0) _settle(data.key.currency0, data.sender, int128(delta0), data.settleUsingTransfer);
-        if (delta1 < 0) _settle(data.key.currency1, data.sender, int128(delta1), data.settleUsingTransfer);
-        if (delta0 > 0) _take(data.key.currency0, data.sender, int128(delta0), data.withdrawTokens);
-        if (delta1 > 0) _take(data.key.currency1, data.sender, int128(delta1), data.withdrawTokens);
+        if (delta0 < 0) data.key.currency0.settle(manager, data.sender, uint256(-delta0), data.settleUsingBurn);
+        if (delta1 < 0) data.key.currency1.settle(manager, data.sender, uint256(-delta1), data.settleUsingBurn);
+        if (delta0 > 0) data.key.currency0.take(manager, data.sender, uint256(delta0), data.takeClaims);
+        if (delta1 > 0) data.key.currency1.take(manager, data.sender, uint256(delta1), data.takeClaims);
 
         return abi.encode(delta);
     }

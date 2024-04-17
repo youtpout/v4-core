@@ -2,10 +2,10 @@
 pragma solidity ^0.8.19;
 
 import {Test} from "forge-std/Test.sol";
-import {Deployers} from "./utils/Deployers.sol";
+import {Deployers} from "test/utils/Deployers.sol";
 import {GasSnapshot} from "forge-gas-snapshot/GasSnapshot.sol";
-import {Action} from "../src/test/PoolNestedActionsTest.sol";
-import {IHooks} from "../src/interfaces/IHooks.sol";
+import {Action} from "src/test/PoolNestedActionsTest.sol";
+import {IHooks} from "src/interfaces/IHooks.sol";
 
 contract NestedActions is Test, Deployers, GasSnapshot {
     Action[] actions;
@@ -18,26 +18,26 @@ contract NestedActions is Test, Deployers, GasSnapshot {
 
     function test_nestedSwap() public {
         actions = [Action.SWAP_AND_SETTLE];
-        nestedActionRouter.lock(abi.encode(actions));
+        nestedActionRouter.unlock(abi.encode(actions));
     }
 
     function test_nestedAddLiquidity() public {
         actions = [Action.ADD_LIQ_AND_SETTLE];
-        nestedActionRouter.lock(abi.encode(actions));
+        nestedActionRouter.unlock(abi.encode(actions));
     }
 
     function test_nestedRemoveLiquidity() public {
         actions = [Action.ADD_LIQ_AND_SETTLE, Action.REMOVE_LIQ_AND_SETTLE];
-        nestedActionRouter.lock(abi.encode(actions));
+        nestedActionRouter.unlock(abi.encode(actions));
     }
 
     function test_nestedDonate() public {
         actions = [Action.DONATE_AND_SETTLE];
-        nestedActionRouter.lock(abi.encode(actions));
+        nestedActionRouter.unlock(abi.encode(actions));
     }
 
     function test_nestedInitialize() public {
         actions = [Action.INITIALIZE];
-        nestedActionRouter.lock(abi.encode(actions));
+        nestedActionRouter.unlock(abi.encode(actions));
     }
 }
