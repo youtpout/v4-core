@@ -6,11 +6,10 @@ import {IPoolManager} from "../interfaces/IPoolManager.sol";
 import {PoolKey} from "../types/PoolKey.sol";
 import {PoolTestBase} from "./PoolTestBase.sol";
 import {SafeCast} from "../libraries/SafeCast.sol";
-import {CurrencySettleTake} from "../libraries/CurrencySettleTake.sol";
+import {Test} from "forge-std/Test.sol";
 
-contract PoolTakeTest is PoolTestBase {
+contract PoolTakeTest is Test, PoolTestBase {
     using CurrencyLibrary for Currency;
-    using CurrencySettleTake for Currency;
     using SafeCast for uint256;
 
     constructor(IPoolManager _manager) PoolTestBase(_manager) {}
@@ -23,10 +22,10 @@ contract PoolTakeTest is PoolTestBase {
     }
 
     function take(PoolKey memory key, uint256 amount0, uint256 amount1) external payable {
-        manager.unlock(abi.encode(CallbackData(msg.sender, key, amount0, amount1)));
+        manager.lock(abi.encode(CallbackData(msg.sender, key, amount0, amount1)));
     }
 
-    function unlockCallback(bytes calldata rawData) external returns (bytes memory) {
+    function lockAcquired(bytes calldata rawData) external returns (bytes memory) {
         require(msg.sender == address(manager));
 
         CallbackData memory data = abi.decode(rawData, (CallbackData));
@@ -38,25 +37,21 @@ contract PoolTakeTest is PoolTestBase {
     }
 
     function _testTake(Currency currency, address sender, uint256 amount) internal {
-        (uint256 userBalBefore, uint256 pmBalBefore, int256 deltaBefore) =
+        (uint256 userBalBefore, uint256 pmBalBefore, uint256 reserveBefore, int256 deltaBefore) =
             _fetchBalances(currency, sender, address(this));
-        require(deltaBefore == 0, "deltaBefore is not equal to 0");
+        assertEq(deltaBefore, 0);
 
-        currency.take(manager, sender, amount, false);
+        _take(currency, sender, amount.toInt128(), true);
 
-        (uint256 userBalAfter, uint256 pmBalAfter, int256 deltaAfter) = _fetchBalances(currency, sender, address(this));
+        (uint256 userBalAfter, uint256 pmBalAfter, uint256 reserveAfter, int256 deltaAfter) =
+            _fetchBalances(currency, sender, address(this));
+        assertEq(deltaAfter, -amount.toInt128());
 
-        require(deltaAfter == -amount.toInt128(), "deltaAfter is not equal to -amount.toInt128()");
+        assertEq(userBalAfter - userBalBefore, amount);
+        assertEq(pmBalBefore - pmBalAfter, amount);
+        assertEq(reserveBefore - reserveAfter, amount);
+        assertEq(reserveBefore - reserveAfter, amount);
 
-        require(
-            userBalAfter - userBalBefore == amount,
-            "the difference between userBalAfter and userBalBefore is not equal to amount"
-        );
-        require(
-            pmBalBefore - pmBalAfter == amount,
-            "the difference between pmBalBefore and pmBalAfter is not equal to amount"
-        );
-
-        currency.settle(manager, sender, amount, false);
+        _settle(currency, sender, -amount.toInt128(), true);
     }
 }

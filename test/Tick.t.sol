@@ -495,8 +495,7 @@ contract TickTest is Test, GasSnapshot {
         assertEq((maxTick - minTick) % tickSpacing, 0);
 
         uint256 numTicks = uint256(int256((maxTick - minTick) / tickSpacing)) + 1;
-
-        // sum of max liquidity on each tick is at most the cap
-        assertGe(type(uint128).max, uint256(maxLiquidityPerTick) * numTicks);
+        // max liquidity at every tick is less than the cap
+        assertGt(type(uint128).max, uint256(maxLiquidityPerTick) * numTicks);
     }
 }
