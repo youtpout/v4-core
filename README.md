@@ -1,5 +1,7 @@
 # Uniswap v4 Core
 
+This branch was created for blockchain who doesn't support cancun yet (stylus for example)
+
 [![Lint](https://github.com/Uniswap/v4-core/actions/workflows/lint.yml/badge.svg)](https://github.com/Uniswap/v4-core/actions/workflows/lint.yml)
 [![Tests](https://github.com/Uniswap/v4-core/actions/workflows/tests.yml/badge.svg)](https://github.com/Uniswap/v4-core/actions/workflows/tests.yml)
 
