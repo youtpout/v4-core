@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.19;
 
 import {Test} from "forge-std/Test.sol";
 import {ERC6909Claims} from "../ERC6909Claims.sol";

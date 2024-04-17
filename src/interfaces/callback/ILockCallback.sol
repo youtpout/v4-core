@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.19;
 
 interface ILockCallback {
     /// @notice Called by the pool manager on `msg.sender` when a lock is acquired
